@@ -59,3 +59,13 @@ type WorkLog struct {
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
+
+// WorkLogSummary represents an AI-generated monthly summary
+type WorkLogSummary struct {
+	ID        int64     `db:"id"`
+	UserID    int64     `db:"user_id"`
+	Month     string    `db:"month"`
+	Summary   string    `db:"summary"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
+}

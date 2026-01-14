@@ -12,11 +12,13 @@ import (
 	"worknote-api/handlers/auth_handler"
 	"worknote-api/handlers/job_application_handler"
 	"worknote-api/handlers/work_log_handler"
+	"worknote-api/handlers/work_log_summary_handler"
 	"worknote-api/middleware"
 	"worknote-api/repos/job_application_log_repo"
 	"worknote-api/repos/job_application_repo"
 	"worknote-api/repos/user_repo"
 	"worknote-api/repos/work_log_repo"
+	"worknote-api/repos/work_log_summary_repo"
 	"worknote-api/utils/render"
 )
 
@@ -33,6 +35,7 @@ func main() {
 	job_application_repo.Initialize()
 	job_application_log_repo.Initialize()
 	work_log_repo.Initialize()
+	work_log_summary_repo.Initialize()
 
 	// Create Fiber app
 	app := fiber.New(fiber.Config{
@@ -71,7 +74,10 @@ func main() {
 	workLogs := app.Group("/work-logs", middleware.AuthMiddleware)
 	workLogs.Put("/", work_log_handler.UpsertWorkLog)
 	workLogs.Get("/", work_log_handler.ListWorkLogs)
+	workLogs.Post("/summary", work_log_summary_handler.GenerateSummary)
+	workLogs.Get("/summary/:month", work_log_summary_handler.GetSummary)
 	workLogs.Get("/:date", work_log_handler.GetWorkLogByDate)
+	workLogs.Delete("/:date", work_log_handler.DeleteWorkLogByDate)
 
 	// Start server
 	cfg := config.Get()

@@ -113,6 +113,7 @@ type JobApplicationLogListResponse struct {
 type UpsertWorkLogRequest struct {
 	Date    string `json:"date"`
 	Content string `json:"content"`
+	Append  bool   `json:"append,omitempty"`
 }
 
 // WorkLogResponse is the response for a work log
@@ -127,4 +128,18 @@ type WorkLogResponse struct {
 // WorkLogListResponse is the response for listing work logs
 type WorkLogListResponse struct {
 	Data []WorkLogResponse `json:"data"`
+}
+
+// GenerateSummaryRequest is the request body for generating a monthly summary
+type GenerateSummaryRequest struct {
+	Month string `json:"month"` // Format: YYYY-MM
+}
+
+// WorkLogSummaryResponse is the response for a work log summary
+type WorkLogSummaryResponse struct {
+	ID        int64  `json:"id"`
+	Month     string `json:"month"`
+	Summary   string `json:"summary"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }

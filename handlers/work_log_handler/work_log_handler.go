@@ -85,3 +85,23 @@ func ListWorkLogs(c *fiber.Ctx) error {
 		Data: responses,
 	})
 }
+
+// DeleteWorkLogByDate handles DELETE /work-logs/:date
+func DeleteWorkLogByDate(c *fiber.Ctx) error {
+	userInfo := middleware.GetUserFromContext(c)
+	if userInfo == nil {
+		return render.Unauthorized(c, "unauthorized")
+	}
+
+	date := c.Params("date")
+	if date == "" {
+		return render.BadRequest(c, "date is required")
+	}
+
+	err := work_log_service.DeleteWorkLogByDate(userInfo.UserID, date)
+	if err != nil {
+		return render.Error(c, fiber.StatusInternalServerError, "internal error")
+	}
+
+	return render.JSON(c, fiber.StatusOK, map[string]string{"message": "deleted"})
+}

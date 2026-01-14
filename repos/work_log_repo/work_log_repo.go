@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	stmtUpsert     *sqlx.NamedStmt
-	stmtGetByDate  *sqlx.NamedStmt
-	stmtListByUser *sqlx.Stmt
+	stmtUpsert       *sqlx.NamedStmt
+	stmtGetByDate    *sqlx.NamedStmt
+	stmtListByUser   *sqlx.Stmt
+	stmtDeleteByDate *sqlx.NamedStmt
 )
 
 // Initialize prepares all named statements for work log repository
@@ -48,6 +49,14 @@ func Initialize() {
 	`)
 	if err != nil {
 		log.Fatalf("failed to prepare work_log stmtListByUser: %v", err)
+	}
+
+	stmtDeleteByDate, err = datastore.DB.PrepareNamed(`
+		DELETE FROM work_logs
+		WHERE user_id = :user_id AND date = :date
+	`)
+	if err != nil {
+		log.Fatalf("failed to prepare work_log stmtDeleteByDate: %v", err)
 	}
 
 	log.Info("work_log_repo initialized")
@@ -88,4 +97,10 @@ func ListByUserID(userID int64) ([]model.WorkLog, error) {
 		return nil, err
 	}
 	return logs, nil
+}
+
+// DeleteByDate deletes a work log by user ID and date
+func DeleteByDate(userID int64, date string) error {
+	_, err := stmtDeleteByDate.Exec(map[string]interface{}{"user_id": userID, "date": date})
+	return err
 }

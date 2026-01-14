@@ -30,6 +30,10 @@ type Config struct {
 	// JWE Keys
 	JWEPrivateKey *rsa.PrivateKey
 	JWEPublicKey  *rsa.PublicKey
+
+	// OpenRouter AI
+	OpenRouterAPIKey string
+	OpenRouterModel  string
 }
 
 // GoogleOAuthJSON represents the structure of Google OAuth credentials JSON
@@ -55,10 +59,12 @@ func Initialize() {
 	}
 
 	cfg = &Config{
-		DatabaseURL:   getEnvOrDefault("DATABASE_URL", "postgres://localhost:5432/worknote?sslmode=disable"),
-		RedisURL:      getEnvOrDefault("REDIS_URL", "localhost:6379"),
-		RedisPassword: os.Getenv("REDIS_PASSWORD"),
-		Port:          getEnvOrDefault("PORT", "8080"),
+		DatabaseURL:      getEnvOrDefault("DATABASE_URL", "postgres://localhost:5432/worknote?sslmode=disable"),
+		RedisURL:         getEnvOrDefault("REDIS_URL", "localhost:6379"),
+		RedisPassword:    os.Getenv("REDIS_PASSWORD"),
+		Port:             getEnvOrDefault("PORT", "8080"),
+		OpenRouterAPIKey: os.Getenv("OPENROUTER_API_KEY"),
+		OpenRouterModel:  getEnvOrDefault("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
 	}
 
 	// Parse Google OAuth JSON
