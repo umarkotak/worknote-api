@@ -39,7 +39,7 @@ stop:
 	sudo launchctl stop com.worknote-api
 
 deploy:
-	git pull --rebase origin master
+	git pull --rebase origin main
 	go mod tidy
 	go mod vendor
 	make bin
