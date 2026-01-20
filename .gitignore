@@ -1,1 +1,4 @@
 .env
+worknote-api
+worknote-api.error.log
+worknote-api.log
