@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	stmtUpsert       *sqlx.NamedStmt
-	stmtGetByDate    *sqlx.NamedStmt
-	stmtListByUser   *sqlx.Stmt
-	stmtDeleteByDate *sqlx.NamedStmt
+	stmtUpsert              *sqlx.NamedStmt
+	stmtGetByDate           *sqlx.NamedStmt
+	stmtListByUser          *sqlx.Stmt
+	stmtListByUserAndDateRange *sqlx.Stmt
+	stmtDeleteByDate        *sqlx.NamedStmt
 )
 
 // Initialize prepares all named statements for work log repository
@@ -57,6 +58,16 @@ func Initialize() {
 	`)
 	if err != nil {
 		log.Fatalf("failed to prepare work_log stmtDeleteByDate: %v", err)
+	}
+
+	stmtListByUserAndDateRange, err = datastore.DB.Preparex(`
+		SELECT id, user_id, date, content, created_at, updated_at
+		FROM work_logs
+		WHERE user_id = $1 AND date >= $2 AND date <= $3
+		ORDER BY date ASC
+	`)
+	if err != nil {
+		log.Fatalf("failed to prepare work_log stmtListByUserAndDateRange: %v", err)
 	}
 
 	log.Info("work_log_repo initialized")
@@ -103,4 +114,14 @@ func ListByUserID(userID int64) ([]model.WorkLog, error) {
 func DeleteByDate(userID int64, date string) error {
 	_, err := stmtDeleteByDate.Exec(map[string]interface{}{"user_id": userID, "date": date})
 	return err
+}
+
+// ListByUserIDAndDateRange retrieves work logs for a user within a date range
+func ListByUserIDAndDateRange(userID int64, startDate, endDate string) ([]model.WorkLog, error) {
+	var logs []model.WorkLog
+	err := stmtListByUserAndDateRange.Select(&logs, userID, startDate, endDate)
+	if err != nil {
+		return nil, err
+	}
+	return logs, nil
 }

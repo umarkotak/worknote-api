@@ -34,6 +34,10 @@ type Config struct {
 	// OpenRouter AI
 	OpenRouterAPIKey string
 	OpenRouterModel  string
+
+	// Z.AI
+	ZaiAPIKey string
+	ZaiModel  string
 }
 
 // GoogleOAuthJSON represents the structure of Google OAuth credentials JSON
@@ -65,6 +69,8 @@ func Initialize() {
 		Port:             getEnvOrDefault("PORT", "8080"),
 		OpenRouterAPIKey: os.Getenv("OPENROUTER_API_KEY"),
 		OpenRouterModel:  getEnvOrDefault("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
+		ZaiAPIKey:        os.Getenv("ZAI_API_KEY"),
+		ZaiModel:         getEnvOrDefault("ZAI_MODEL", "glm-4.7"),
 	}
 
 	// Parse Google OAuth JSON

@@ -6,6 +6,8 @@ import (
 	"worknote-api/contract"
 	"worknote-api/middleware"
 	"worknote-api/model"
+	"worknote-api/services/work_log_download_service"
+	"worknote-api/services/work_log_import_service"
 	"worknote-api/services/work_log_service"
 	"worknote-api/utils/render"
 )
@@ -104,4 +106,66 @@ func DeleteWorkLogByDate(c *fiber.Ctx) error {
 	}
 
 	return render.JSON(c, fiber.StatusOK, map[string]string{"message": "deleted"})
+}
+
+// DownloadWorkLogs handles GET /work-logs/download
+func DownloadWorkLogs(c *fiber.Ctx) error {
+	userInfo := middleware.GetUserFromContext(c)
+	if userInfo == nil {
+		return render.Unauthorized(c, "unauthorized")
+	}
+
+	startDate := c.Query("start_date")
+	endDate := c.Query("end_date")
+
+	req := &work_log_download_service.DownloadRequest{
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	markdown, filename, err := work_log_download_service.DownloadWorkLogs(userInfo.UserID, req)
+	if err != nil {
+		return render.BadRequest(c, err.Error())
+	}
+
+	c.Set("Content-Type", "text/markdown; charset=utf-8")
+	c.Set("Content-Disposition", "attachment; filename=\""+filename+"\"")
+
+	return c.SendString(markdown)
+}
+
+// ImportWorkLogs handles POST /work-logs/import
+func ImportWorkLogs(c *fiber.Ctx) error {
+	userInfo := middleware.GetUserFromContext(c)
+	if userInfo == nil {
+		return render.Unauthorized(c, "unauthorized")
+	}
+
+	// Get file from form
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return render.BadRequest(c, "file is required")
+	}
+
+	// Open the file
+	file, err := fileHeader.Open()
+	if err != nil {
+		return render.Error(c, fiber.StatusInternalServerError, "failed to open file")
+	}
+	defer file.Close()
+
+	// Read file content
+	content := make([]byte, fileHeader.Size)
+	_, err = file.Read(content)
+	if err != nil {
+		return render.Error(c, fiber.StatusInternalServerError, "failed to read file")
+	}
+
+	// Import worklogs from markdown
+	result, err := work_log_import_service.ImportFromMarkdown(userInfo.UserID, string(content))
+	if err != nil {
+		return render.BadRequest(c, err.Error())
+	}
+
+	return render.JSON(c, fiber.StatusOK, result)
 }

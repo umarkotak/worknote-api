@@ -74,6 +74,8 @@ func main() {
 	workLogs := app.Group("/work-logs", middleware.AuthMiddleware)
 	workLogs.Put("/", work_log_handler.UpsertWorkLog)
 	workLogs.Get("/", work_log_handler.ListWorkLogs)
+	workLogs.Get("/download", work_log_handler.DownloadWorkLogs)
+	workLogs.Post("/import", work_log_handler.ImportWorkLogs)
 	workLogs.Post("/summary", work_log_summary_handler.GenerateSummary)
 	workLogs.Get("/summary/:month", work_log_summary_handler.GetSummary)
 	workLogs.Get("/:date", work_log_handler.GetWorkLogByDate)

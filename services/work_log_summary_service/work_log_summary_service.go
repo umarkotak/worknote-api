@@ -173,3 +173,100 @@ Format the summary in a clear, professional manner.
 
 	return openRouterResp.Choices[0].Message.Content, nil
 }
+
+// Z.AI API types
+type zaiRequest struct {
+	Model       string       `json:"model"`
+	Messages    []zaiMsg     `json:"messages"`
+	Thinking    *zaiThinking `json:"thinking,omitempty"`
+	MaxTokens   int          `json:"max_tokens,omitempty"`
+	Temperature float64      `json:"temperature,omitempty"`
+}
+
+type zaiMsg struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
+}
+
+type zaiThinking struct {
+	Type string `json:"type"`
+}
+
+type zaiResponse struct {
+	Choices []struct {
+		Message struct {
+			Content string `json:"content"`
+		} `json:"message"`
+	} `json:"choices"`
+	Error *struct {
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
+}
+
+// callZai calls the Z.AI API to generate a summary
+// https://docs.z.ai/guides/llm/glm-4.7#quick-start
+func callZai(content string) (string, error) {
+	cfg := config.Get()
+
+	if cfg.ZaiAPIKey == "" {
+		return "", errors.New("ZAI_API_KEY is not configured")
+	}
+
+	prompt := fmt.Sprintf(`You are a helpful assistant that summarizes work logs.
+
+Please provide a concise but comprehensive summary of the following monthly work activities.
+Highlight key accomplishments, recurring themes, and notable patterns.
+Format the summary in a clear, professional manner.
+
+%s`, content)
+
+	reqBody := zaiRequest{
+		Model: cfg.ZaiModel,
+		Messages: []zaiMsg{
+			{Role: "user", Content: prompt},
+		},
+		Thinking:    &zaiThinking{Type: "enabled"},
+		MaxTokens:   4096,
+		Temperature: 1.0,
+	}
+
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", "https://api.z.ai/api/paas/v4/chat/completions", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+cfg.ZaiAPIKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to call Z.AI API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var zaiResp zaiResponse
+	if err := json.Unmarshal(body, &zaiResp); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if zaiResp.Error != nil {
+		return "", fmt.Errorf("Z.AI error: %s", zaiResp.Error.Message)
+	}
+
+	if len(zaiResp.Choices) == 0 {
+		return "", errors.New("no response from Z.AI")
+	}
+
+	return zaiResp.Choices[0].Message.Content, nil
+}
